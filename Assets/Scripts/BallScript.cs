@@ -56,11 +56,11 @@ public class BallScript : MonoBehaviour
         // =========================
 
         // Componente horizontal
-/*        vx = velocidad * Mathf.Cos(radianes);
+        vx = velocidad * Mathf.Cos(radianes);
 
         // Componente vertical
         vy = velocidad * Mathf.Sin(radianes);
-*/
+
         // =========================
         // CONFIGURACIÓN DEL LINERENDERER
         // =========================
@@ -149,7 +149,7 @@ public class BallScript : MonoBehaviour
         Vector3 direccionInicial = transform.forward * velocidad;
 
         // Descomposición de la dirección en componentes X e Y
-        float vx = direccionInicial.x;
+        float vz = direccionInicial.z;
         float vy = direccionInicial.y;
 
         for (int i = 0; i < puntosTrayectoria; i++)
@@ -158,11 +158,12 @@ public class BallScript : MonoBehaviour
             float t = i * 0.1f;
 
             // Calculamos la posición en X e Y
-            float x = posicionInicial.x + vx * t;
+            float z = posicionInicial.z + vz * t;
             float y = posicionInicial.y + vy * t - 0.5f * gravedad * t * t;
 
+            Debug.Log(transform.rotation.eulerAngles.y);
             // Asignamos el punto calculado
-            puntos[i] = new Vector3(x, y, posicionInicial.z);
+            puntos[i] = new Vector3(i * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y), y, z);
         }
 
         // Asignamos los puntos al LineRenderer
