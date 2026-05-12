@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.WSA;
 
 [RequireComponent(typeof(LineRenderer))]
 public class BallScript : MonoBehaviour
 {
     [Header("Datos del disparo")]
+
 
     // Velocidad inicial del objeto
     public float velocidad = 10f;
@@ -21,8 +23,11 @@ public class BallScript : MonoBehaviour
     // Posición inicial del objeto
     private Vector3 posicionInicial;
 
+    public bool launch = false;
+
     // Componentes de la velocidad
     private float vx;
+    private float vz;
     private float vy;
 
     private Rigidbody rb;
@@ -45,7 +50,6 @@ public class BallScript : MonoBehaviour
         rb = GetComponent<Rigidbody>();
 
         // Guardamos la posición donde inicia el objeto
-        posicionInicial = transform.position;
 
         // Convertimos el ángulo a radianes
         // Mathf.Sin y Mathf.Cos trabajan en radianes
@@ -54,12 +58,24 @@ public class BallScript : MonoBehaviour
         // =========================
         // DESCOMPOSICIÓN DEL VECTOR
         // =========================
+        /*
+                // Componente horizontal
+                vz = velocidad * Mathf.Cos(radianes);
+
+                // Componente vertical
+                vy = velocidad * Mathf.Sin(radianes);
+
+
+        */
+
 
         // Componente horizontal
-        vx = velocidad * Mathf.Cos(radianes);
+        vx = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y);
+
+        vz = velocidad * Mathf.Cos(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
 
         // Componente vertical
-        vy = velocidad * Mathf.Sin(radianes);
+        vy = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
 
         // =========================
         // CONFIGURACIÓN DEL LINERENDERER
@@ -70,12 +86,15 @@ public class BallScript : MonoBehaviour
         lineRenderer.startWidth = 0.1f;
         lineRenderer.endWidth = 0.1f;
 
+        posicionInicial = transform.position;
+
         // Dibujar la trayectoria inicial
         DibujarTrayectoria();
     }
 
     void Update()
     {
+
         // Rotación manual sin Rigidbody
         if (Input.GetKey(KeyCode.A))
         {
@@ -97,13 +116,47 @@ public class BallScript : MonoBehaviour
             transform.Rotate(Vector3.right * rotationForce, Space.Self);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            tiempo = 0f; // Reiniciamos el tiempo para el nuevo disparo
 
+        if (Input.GetKey(KeyCode.Q))
+        {
+            velocidad++;
+        }
+        if (Input.GetKey(KeyCode.E))
+        {
+            velocidad--;
+        }
+
+
+        if (Input.GetKey(KeyCode.Z))
+        {
+            transform.position += Vector3.right * Time.deltaTime;
+        }
+        if (Input.GetKey(KeyCode.C))
+        {
+            transform.position -= Vector3.right * Time.deltaTime;
+        }
+
+        if(!launch)
+        {
+            posicionInicial = transform.position;
+
+            DibujarTrayectoria();
+        }
+
+
+        if (Input.GetKeyDown(KeyCode.Space) || launch)
+        {
+            if (!launch)
+            {
+                tiempo = 0f;
+                launch = true;
+            }
+           
+                // tiempo = 0f; // Reiniciamos el tiempo para el nuevo disparo
+                
             Shoot();
         }
-        DibujarTrayectoria();
+        
 
 
     }
@@ -117,9 +170,9 @@ public class BallScript : MonoBehaviour
     {
         // Sumamos el tiempo que pasa entre frames
         tiempo += Time.deltaTime;
-
+        /*
         // MOVIMIENTO EN X
-        float x = posicionInicial.x + vx * tiempo;
+        float x = posicionInicial.x + vz * tiempo;
 
         // MOVIMIENTO EN Y
         //
@@ -135,6 +188,19 @@ public class BallScript : MonoBehaviour
         // =========================
 
         transform.position = new Vector3(x, y, posicionInicial.z);
+        */
+
+
+        // Calculamos la posición en X e Y
+        float x = posicionInicial.x + vx * tiempo;
+        float z = posicionInicial.z + vz * tiempo;
+        float y = posicionInicial.y + vy * tiempo - 0.5f * gravedad * tiempo * tiempo;
+
+        // Asignamos el punto calculado
+        //puntos[i] = new Vector3(i * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y), y, z) ;
+        transform.position = new Vector3(x, y, z);
+
+
     }
 
     // =========================
@@ -146,11 +212,15 @@ public class BallScript : MonoBehaviour
         Vector3[] puntos = new Vector3[puntosTrayectoria];
 
         // Dirección inicial basada en la rotación actual
-        Vector3 direccionInicial = transform.forward * velocidad;
+        Vector3 direccionInicial = transform.forward;
 
-        // Descomposición de la dirección en componentes X e Y
-        float vz = direccionInicial.z;
-        float vy = direccionInicial.y;
+        vx = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y);
+
+        // Componente horizontal
+        vz = velocidad * Mathf.Cos(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
+
+        // Componente vertical
+        vy = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
 
         for (int i = 0; i < puntosTrayectoria; i++)
         {
@@ -158,12 +228,14 @@ public class BallScript : MonoBehaviour
             float t = i * 0.1f;
 
             // Calculamos la posición en X e Y
-            float z = posicionInicial.z + vz * t;
-            float y = posicionInicial.y + vy * t - 0.5f * gravedad * t * t;
+            float x = transform.localPosition.x + vx * t;
+            float z = transform.localPosition.z + vz * t;
+            float y = transform.localPosition.y + vy * t - 0.5f * gravedad * t * t;
 
             Debug.Log(transform.rotation.eulerAngles.y);
             // Asignamos el punto calculado
-            puntos[i] = new Vector3(i * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y), y, z);
+            //puntos[i] = new Vector3(i * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y), y, z) ;
+            puntos[i] = new Vector3(x, y, z);
         }
 
         // Asignamos los puntos al LineRenderer
