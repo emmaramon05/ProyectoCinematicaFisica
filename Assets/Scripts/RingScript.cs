@@ -1,37 +1,60 @@
 using UnityEngine;
+using TMPro;
 
 public class RingScript : MonoBehaviour
 {
-    public float velocidad = 2f;
-    public float rangoMovimiento = 5f;
-    public float tiempoCambio = 2f;
+    public Transform limiteIzquierdo;
+    public Transform limiteDerecho;
 
-    private float objetivoX;
-    private float tiempoSiguienteCambio;
+    public float velocidad = 2f;
+    public int score = 0;
+
+    public TextMeshProUGUI scoreText;
+
+    private Transform objetivoActual;
+
+    private bool encestado = false;
 
     void Start()
     {
-        ElegirNuevoObjetivo();
+        objetivoActual = limiteDerecho;
+
+        ActualizarScore();
     }
 
     void Update()
     {
-        // Mover hacia el objetivo
-        Vector3 posicion = transform.position;
-        posicion.x = Mathf.MoveTowards(posicion.x, objetivoX, velocidad * Time.deltaTime);
-        transform.position = posicion;
-
-        // Cambiar objetivo cada cierto tiempo
-        if (Time.time >= tiempoSiguienteCambio)
+        if (encestado)
         {
-            ElegirNuevoObjetivo();
+            velocidad *= 2;
+            encestado = false;
+        }
+
+        transform.position = Vector3.MoveTowards(
+            transform.position,
+            objetivoActual.position,
+            velocidad * Time.deltaTime
+        );
+
+        if (Vector3.Distance(transform.position, objetivoActual.position) < 0.01f)
+        {
+            objetivoActual = (objetivoActual == limiteDerecho)
+                ? limiteIzquierdo
+                : limiteDerecho;
         }
     }
 
-    void ElegirNuevoObjetivo()
+    public void Encestar()
     {
-        float xInicial = transform.position.x;
-        objetivoX = xInicial + Random.Range(-rangoMovimiento, rangoMovimiento);
-        tiempoSiguienteCambio = Time.time + tiempoCambio;
+        score += 10;
+
+        encestado = true;
+
+        ActualizarScore();
+    }
+
+    void ActualizarScore()
+    {
+        scoreText.text = "Score: " + score;
     }
 }
