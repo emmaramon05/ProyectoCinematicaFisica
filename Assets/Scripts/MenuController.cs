@@ -3,10 +3,11 @@ using UnityEngine.SceneManagement;
 
 public class MenuController : MonoBehaviour
 {
+    
     public void StartGame()
     {
-        SceneManager.LoadScene("PantallaJuego"); // usa el nombre exacto
-    }
+        SceneManager.LoadScene("PantallaJuego");
+    } 
 
     public void ExitGame()
     {
@@ -17,4 +18,13 @@ public class MenuController : MonoBehaviour
         Application.Quit();
         #endif
     }
+
+    public void BackMenu()
+    {
+        SceneManager.LoadScene("MenuScene");
+    }
+
+
+
+    
 }
