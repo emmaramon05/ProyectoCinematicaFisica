@@ -142,7 +142,7 @@ public class BallScript : MonoBehaviour
 
             DibujarTrayectoria();
         }
-
+        
 
         if (Input.GetKeyDown(KeyCode.Space) || launch)
         {
@@ -163,7 +163,7 @@ public class BallScript : MonoBehaviour
 
     private void FixedUpdate()
     {
-       
+
     }
 
     void Shoot()
@@ -199,7 +199,6 @@ public class BallScript : MonoBehaviour
         // Asignamos el punto calculado
         //puntos[i] = new Vector3(i * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y), y, z) ;
         transform.position = new Vector3(x, y, z);
-
 
     }
 

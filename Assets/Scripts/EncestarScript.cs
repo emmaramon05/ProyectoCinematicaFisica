@@ -9,6 +9,8 @@ public class BasketTrigger : MonoBehaviour
         if (other.CompareTag("Bola"))
         {
             ringScript.Encestar();
+            other.GetComponent<ScriptBola2>().Invoke("ResetBall", 1f);
+
         }
     }
 }

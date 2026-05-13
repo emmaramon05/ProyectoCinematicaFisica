@@ -26,7 +26,7 @@ public class RingScript : MonoBehaviour
     {
         if (encestado)
         {
-            velocidad *= 2;
+            velocidad += 0.5f;
             encestado = false;
         }
 
