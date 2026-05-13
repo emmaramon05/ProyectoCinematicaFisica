@@ -1,243 +1,205 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.WSA;
 
 [RequireComponent(typeof(LineRenderer))]
+[RequireComponent(typeof(SphereCollider))]
 public class BallScript : MonoBehaviour
 {
     [Header("Datos del disparo")]
-
-
-    // Velocidad inicial del objeto
     public float velocidad = 10f;
-
-    // Ángulo de disparo en grados
     public float angulo = 45f;
-
-    // Gravedad manual
     public float gravedad = 9.81f;
 
-    // Tiempo transcurrido desde el disparo
     private float tiempo;
-
-    // Posición inicial del objeto
     private Vector3 posicionInicial;
 
     public bool launch = false;
+    private bool usingPhysics = false;
 
-    // Componentes de la velocidad
     private float vx;
     private float vz;
     private float vy;
 
     private Rigidbody rb;
+    private SphereCollider esfera;
 
     public float rotationForce = 0.2f;
     public float fuerza = 10f;
+    public float incrementoVelocidad = 2f;
 
-    // =========================
-    // VARIABLES PARA EL LINERENDERER
-    // =========================
+    [Header("Color trayectoria")]
+    public float velocidadMinColor = 0f;
+    public float velocidadMaxColor = 30f;
 
-    // LineRenderer para dibujar la trayectoria
+    [Header("Reset")]
+    public Transform respawnPoint;
+
     private LineRenderer lineRenderer;
-
-    // Número de puntos en la trayectoria
     public int puntosTrayectoria = 30;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        esfera = GetComponent<SphereCollider>();
 
-        // Guardamos la posición donde inicia el objeto
-
-        // Convertimos el ángulo a radianes
-        // Mathf.Sin y Mathf.Cos trabajan en radianes
-        float radianes = angulo * Mathf.Deg2Rad;
-
-        // =========================
-        // DESCOMPOSICIÓN DEL VECTOR
-        // =========================
-        /*
-                // Componente horizontal
-                vz = velocidad * Mathf.Cos(radianes);
-
-                // Componente vertical
-                vy = velocidad * Mathf.Sin(radianes);
-
-
-        */
-
-
-        // Componente horizontal
-        vx = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y);
-
-        vz = velocidad * Mathf.Cos(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
-
-        // Componente vertical
-        vy = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
-
-        // =========================
-        // CONFIGURACIÓN DEL LINERENDERER
-        // =========================
+        rb.isKinematic = true;
+        rb.useGravity = false;
 
         lineRenderer = GetComponent<LineRenderer>();
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
         lineRenderer.positionCount = puntosTrayectoria;
         lineRenderer.startWidth = 0.1f;
         lineRenderer.endWidth = 0.1f;
 
         posicionInicial = transform.position;
-
-        // Dibujar la trayectoria inicial
         DibujarTrayectoria();
     }
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.R))
+            ResetBall();
 
-        // Rotación manual sin Rigidbody
+        if (usingPhysics) return;
+
         if (Input.GetKey(KeyCode.A))
-        {
             transform.Rotate(Vector3.up * -rotationForce, Space.Self);
-        }
         if (Input.GetKey(KeyCode.D))
-        {
             transform.Rotate(Vector3.up * rotationForce, Space.Self);
-        }
-
-
-
         if (Input.GetKey(KeyCode.W))
-        {
             transform.Rotate(Vector3.right * -rotationForce, Space.Self);
-        }
         if (Input.GetKey(KeyCode.S))
-        {
             transform.Rotate(Vector3.right * rotationForce, Space.Self);
-        }
-
 
         if (Input.GetKey(KeyCode.Q))
-        {
-            velocidad++;
-        }
+            velocidad += incrementoVelocidad * Time.deltaTime;
         if (Input.GetKey(KeyCode.E))
-        {
-            velocidad--;
-        }
-
+            velocidad -= incrementoVelocidad * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.Z))
-        {
             transform.position += Vector3.right * Time.deltaTime;
-        }
         if (Input.GetKey(KeyCode.C))
-        {
             transform.position -= Vector3.right * Time.deltaTime;
-        }
 
-        if(!launch)
+        if (!launch)
         {
             posicionInicial = transform.position;
-
             DibujarTrayectoria();
         }
-        
 
-        if (Input.GetKeyDown(KeyCode.Space) || launch)
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (!launch)
-            {
-                tiempo = 0f;
-                launch = true;
-            }
-           
-                // tiempo = 0f; // Reiniciamos el tiempo para el nuevo disparo
-                
-            Shoot();
+            tiempo = 0f;
+            launch = true;
+            lineRenderer.positionCount = 0;
+
+            vx = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y);
+            vz = velocidad * Mathf.Cos(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
+            vy = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
         }
-        
-
 
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
+        if (!launch || usingPhysics) return;
 
-    }
+        tiempo += Time.fixedDeltaTime;
 
-    void Shoot()
-    {
-        // Sumamos el tiempo que pasa entre frames
-        tiempo += Time.deltaTime;
-        /*
-        // MOVIMIENTO EN X
-        float x = posicionInicial.x + vz * tiempo;
-
-        // MOVIMIENTO EN Y
-        //
-        // y = y0 + vy * t - 1/2 * g * t²
-        //
-        // Movimiento acelerado por gravedad
-        float y = posicionInicial.y
-                  + vy * tiempo
-                  - 0.5f * gravedad * tiempo * tiempo;
-
-        // =========================
-        // ACTUALIZAR POSICIÓN
-        // =========================
-
-        transform.position = new Vector3(x, y, posicionInicial.z);
-        */
-
-
-        // Calculamos la posición en X e Y
         float x = posicionInicial.x + vx * tiempo;
         float z = posicionInicial.z + vz * tiempo;
         float y = posicionInicial.y + vy * tiempo - 0.5f * gravedad * tiempo * tiempo;
 
-        // Asignamos el punto calculado
-        //puntos[i] = new Vector3(i * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y), y, z) ;
-        transform.position = new Vector3(x, y, z);
+        Vector3 nuevaPosicion = new Vector3(x, y, z);
+        Vector3 desplazamiento = nuevaPosicion - transform.position;
+        float distancia = desplazamiento.magnitude;
 
+        if (distancia > 0.001f)
+        {
+            float radio = esfera.radius * transform.lossyScale.x;
+
+            // Barrer el espacio entre posicion actual y nueva para detectar cualquier collider
+            if (Physics.SphereCast(
+                transform.position,
+                radio,
+                desplazamiento.normalized,
+                out RaycastHit hit,
+                distancia,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore))
+            {
+                ActivarFisica();
+                return;
+            }
+        }
+
+        transform.position = nuevaPosicion;
     }
 
-    // =========================
-    // MÉTODO PARA DIBUJAR LA TRAYECTORIA
-    // =========================
+    void ActivarFisica()
+    {
+        if (usingPhysics) return;
+
+        Vector3 velocidadActual = new Vector3(vx, vy - gravedad * tiempo, vz);
+
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.linearVelocity = velocidadActual;
+
+        usingPhysics = true;
+    }
+
+    // Fallback por si el SphereCast falla en algun caso extremo
+    void OnCollisionEnter(Collision collision)
+    {
+        ActivarFisica();
+    }
+
+    public void ResetBall()
+    {
+        launch = false;
+        usingPhysics = false;
+        tiempo = 0f;
+
+        rb.isKinematic = true;
+        rb.useGravity = false;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        if (respawnPoint != null)
+        {
+            transform.position = respawnPoint.position;
+            transform.rotation = respawnPoint.rotation;
+        }
+
+        lineRenderer.positionCount = puntosTrayectoria;
+        DibujarTrayectoria();
+    }
 
     void DibujarTrayectoria()
     {
         Vector3[] puntos = new Vector3[puntosTrayectoria];
 
-        // Dirección inicial basada en la rotación actual
-        Vector3 direccionInicial = transform.forward;
-
-        vx = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y);
-
-        // Componente horizontal
-        vz = velocidad * Mathf.Cos(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
-
-        // Componente vertical
-        vy = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
+        float vxT = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y);
+        float vzT = velocidad * Mathf.Cos(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
+        float vyT = velocidad * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.x);
 
         for (int i = 0; i < puntosTrayectoria; i++)
         {
-            // Calculamos el tiempo para cada punto
             float t = i * 0.1f;
 
-            // Calculamos la posición en X e Y
-            float x = transform.localPosition.x + vx * t;
-            float z = transform.localPosition.z + vz * t;
-            float y = transform.localPosition.y + vy * t - 0.5f * gravedad * t * t;
+            float x = transform.position.x + vxT * t;
+            float z = transform.position.z + vzT * t;
+            float y = transform.position.y + vyT * t - 0.5f * gravedad * t * t;
 
-            Debug.Log(transform.rotation.eulerAngles.y);
-            // Asignamos el punto calculado
-            //puntos[i] = new Vector3(i * Mathf.Sin(Mathf.Deg2Rad * transform.rotation.eulerAngles.y), y, z) ;
             puntos[i] = new Vector3(x, y, z);
         }
 
-        // Asignamos los puntos al LineRenderer
+        float tColor = Mathf.InverseLerp(velocidadMinColor, velocidadMaxColor, velocidad);
+        Color color = Color.Lerp(Color.green, Color.red, tColor);
+        lineRenderer.startColor = color;
+        lineRenderer.endColor = color;
+
         lineRenderer.SetPositions(puntos);
     }
 }
