@@ -29,7 +29,6 @@ public class GameTimer : MonoBehaviour
                 gameTime = 0;
                 gameStarted = false;
 
-                Debug.Log("Fin del juego");
             }
 
             UpdateTimerUI();
