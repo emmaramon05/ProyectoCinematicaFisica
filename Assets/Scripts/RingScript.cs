@@ -55,6 +55,6 @@ public class RingScript : MonoBehaviour
 
     void ActualizarScore()
     {
-        scoreText.text = "Score: " + score;
+        scoreText.text = "" + score;
     }
 }
