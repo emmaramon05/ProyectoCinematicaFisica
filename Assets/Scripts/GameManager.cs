@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -5,6 +6,11 @@ public class GameManager : MonoBehaviour
 
     public GameObject canvasPause;
     public GameObject canvasControles;
+    public GameObject canvasFinish;
+    public float gameTime = 180f;
+
+    public TextMeshProUGUI scoreText;
+    public RingScript RingScript;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -12,6 +18,7 @@ public class GameManager : MonoBehaviour
         canvasPause.SetActive(false);
         canvasControles.SetActive(true);
         Time.timeScale = 1f;
+        canvasFinish.SetActive(false);
 
 
     }
@@ -27,6 +34,15 @@ public class GameManager : MonoBehaviour
         {
             canvasControles.SetActive(!canvasControles.activeSelf);
         }
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            gameTime -= 10f;
+        }
+        if (gameTime == 0)
+        {
+            Finish();
+
+        }
     }
 
     void Pausa()
@@ -39,5 +55,12 @@ public class GameManager : MonoBehaviour
     {
         canvasPause.SetActive(false);
         Time.timeScale = 1f;
+    }
+
+    public void Finish()
+    {
+        canvasFinish.SetActive(true);
+        Time.timeScale = 0f;
+        scoreText.text = RingScript.score.ToString();
     }
 }

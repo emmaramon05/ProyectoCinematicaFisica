@@ -7,6 +7,8 @@ public class GameTimer : MonoBehaviour
     public TextMeshProUGUI countdownText;
     public TextMeshProUGUI timerText;
 
+    GameManager gameManager;
+
     public float gameTime = 180f; // 3 minutos
 
     private bool gameStarted = false;
@@ -40,6 +42,7 @@ public class GameTimer : MonoBehaviour
         {
             gameTime -= 10f;
         }
+        
 
     }
 
